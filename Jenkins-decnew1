@@ -1,0 +1,38 @@
+##############################################
+
+pipeline{
+    agent any
+	
+	environment{
+	    PATH - "/opt/maven3/bin:$PATH"
+	}
+	stages{
+       stage ("git checkout"){
+	      steps{
+		      git credentialsId: 'purush29', url: 'https://github.com/Purushotham29/project1.git'
+			
+		
+	
+			}        
+	}	
+	stage("Maven Build"){
+       steps{
+           sh "mvn clean package"	 
+           sh "mv target/*.war target/project1.war"
+        }
+	}
+	stage("deploy-dev"){
+	    steps{
+		    sshagent(['tomcat-new']){
+			sh """
+			   scp -o StrictHostKeyChecking=no target/project1.war ec2-user@ 172.31.45.75/root/apache-tomcat-10.0.27/project1/
+			   ssh ec2-user@172.31.45.75/root/apache-tomcat-10.0.27/bin/shutdown.sh
+			   ssh ec2-user@172.31.45.75/root/apache-tomcat-10.0.27/bin/startup.sh
+			   """
+			       }  
+	        }
+         }
+      }
+    }
+	  
+	
